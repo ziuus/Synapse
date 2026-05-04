@@ -23,12 +23,19 @@ export default function ChatInterface({ sessionId }: ChatProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  const [apiUrlBase, setApiUrlBase] = useState<string>("");
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname, port } = window.location;
+      const targetPort = port === '3000' ? '8000' : port;
+      const portStr = targetPort ? `:${targetPort}` : '';
+      setApiUrlBase(`${protocol}//${hostname}${portStr}`);
+    }
+  }, []);
+
   const getApiUrl = (path: string) => {
-    if (typeof window === 'undefined') return `http://localhost:8000${path}`;
-    const { protocol, hostname, port } = window.location;
-    const targetPort = port === '3000' ? '8000' : port;
-    const portStr = targetPort ? `:${targetPort}` : '';
-    return `${protocol}//${hostname}${portStr}${path}`;
+    return `${apiUrlBase || 'http://localhost:8000'}${path}`;
   };
 
   useEffect(() => {

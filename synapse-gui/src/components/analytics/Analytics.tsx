@@ -7,19 +7,23 @@ import { cn } from "@/lib/utils";
 
 export default function Analytics() {
   const [data, setData] = useState<any>(null);
-
-  const getApiUrl = (path: string) => {
-    if (typeof window === 'undefined') return `http://localhost:8000${path}`;
-    const { protocol, hostname, port } = window.location;
-    const targetPort = port === '3000' ? '8000' : port;
-    const portStr = targetPort ? `:${targetPort}` : '';
-    return `${protocol}//${hostname}${portStr}${path}`;
-  };
+  const [apiUrlBase, setApiUrlBase] = useState<string>("");
 
   useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const { protocol, hostname, port } = window.location;
+      const targetPort = port === '3000' ? '8000' : port;
+      const portStr = targetPort ? `:${targetPort}` : '';
+      setApiUrlBase(`${protocol}//${hostname}${portStr}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!apiUrlBase) return;
+    
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch(getApiUrl("/api/status"));
+        const res = await fetch(`${apiUrlBase}/api/status`);
         const json = await res.json();
         setData(json);
       } catch (e) {

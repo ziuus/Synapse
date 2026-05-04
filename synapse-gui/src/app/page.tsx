@@ -22,12 +22,18 @@ export default function Home() {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
-  const getApiUrl = (path: string) => {
-    if (typeof window === 'undefined') return `http://localhost:8000${path}`;
+  const [apiUrlBase, setApiUrlBase] = useState<string>("");
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+
+  useEffect(() => {
     const { protocol, hostname, port } = window.location;
     const targetPort = port === '3000' ? '8000' : port;
     const portStr = targetPort ? `:${targetPort}` : '';
-    return `${protocol}//${hostname}${portStr}${path}`;
+    setApiUrlBase(`${protocol}//${hostname}${portStr}`);
+  }, []);
+
+  const getApiUrl = (path: string) => {
+    return `${apiUrlBase || 'http://localhost:8000'}${path}`;
   };
 
   const fetchSessions = async () => {
@@ -134,27 +140,18 @@ export default function Home() {
     visible: { opacity: 1, x: 0 }
   };
 
-  const deleteSession = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!window.confirm("ARE YOU SURE YOU WANT TO TERMINATE THIS NEURAL STREAM?")) return;
+  const deleteSession = async (id: string) => {
     try {
-      console.log("Attempting to delete session:", id);
+      console.log("Terminating stream:", id);
       const res = await fetch(getApiUrl(`/api/sessions/${id}`), { method: "DELETE" });
       if (res.ok) {
-        console.log("Successfully deleted session:", id);
-        // Optimistic update
         setSessions(prev => prev.filter(s => s.id !== id));
         if (currentSessionId === id) setCurrentSessionId("");
-        await fetchSessions(); 
-        alert("Neural Stream Terminated Successfully.");
-      } else {
-        const err = await res.text();
-        console.error("Delete failed on server:", err);
-        alert(`Deletion failed: ${err}`);
+        setConfirmDeleteId(null);
+        await fetchSessions();
       }
-    } catch (err: any) { 
-      console.error("Network error during delete:", err);
-      alert(`Network error: ${err.message}`);
+    } catch (err) { 
+      console.error("Deletion failed", err);
     }
   };
 
@@ -254,16 +251,29 @@ export default function Home() {
                           >
                             <Download size={15}/>
                           </button>
-                          <button 
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              console.log("Delete triggered for:", s.id);
-                              deleteSession(s.id, e); 
-                            }} 
-                            className="p-1 hover:text-red-400 transition-colors"
-                          >
-                            <Trash2 size={15}/>
-                          </button>
+                          {confirmDeleteId === s.id ? (
+                            <div className="flex items-center gap-1">
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); deleteSession(s.id); }}
+                                className="p-1 text-red-400 hover:bg-red-400/20 rounded-md transition-all"
+                              >
+                                <Check size={14}/>
+                              </button>
+                              <button 
+                                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}
+                                className="p-1 text-white/40 hover:bg-white/10 rounded-md transition-all"
+                              >
+                                <X size={14}/>
+                              </button>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(s.id); }} 
+                              className="p-1 hover:text-red-400 transition-colors"
+                            >
+                              <Trash2 size={15}/>
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
