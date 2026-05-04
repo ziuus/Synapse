@@ -15,7 +15,7 @@ import NoSSR from "@/components/NoSSR";
 import { Plus, Terminal, Server, Clock, Blocks, Wrench, Settings as CfgIcon, Bug, FileText, Search, Edit3, Trash2, Download, Check, X } from "lucide-react";
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<string>("chat");
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const [sessions, setSessions] = useState<any[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,12 +88,10 @@ export default function Home() {
     } catch (e) { console.error("Export failed", e); }
   };
 
-  // Auto-select session or create first one
+  // Optional: Auto-select session if user switches to chat tab
   useEffect(() => {
     if (activeTab === "chat" && !currentSessionId && sessions.length > 0) {
       setCurrentSessionId(sessions[0].id);
-    } else if (activeTab === "chat" && !currentSessionId && sessions.length === 0) {
-      createSession();
     }
   }, [sessions, activeTab, currentSessionId]);
 
@@ -144,8 +142,11 @@ export default function Home() {
       const res = await fetch(getApiUrl(`/api/sessions/${id}`), { method: "DELETE" });
       if (res.ok) {
         console.log("Successfully deleted session:", id);
+        // Optimistic update
+        setSessions(prev => prev.filter(s => s.id !== id));
         if (currentSessionId === id) setCurrentSessionId("");
-        await fetchSessions();
+        await fetchSessions(); 
+        alert("Neural Stream Terminated Successfully.");
       } else {
         const err = await res.text();
         console.error("Delete failed on server:", err);
@@ -205,18 +206,10 @@ export default function Home() {
                 </div>
               </div>
 
-              <motion.div 
-                initial="hidden"
-                animate="visible"
-                variants={{
-                  visible: { transition: { staggerChildren: 0.05 } }
-                }}
-                className="space-y-1"
-              >
+              <div className="space-y-1">
                 {filteredSessions.map(s => (
-                  <motion.div
+                  <div
                     key={s.id}
-                    variants={itemVariants}
                     onClick={() => { setActiveTab("chat"); setCurrentSessionId(s.id); }}
                     className={cn(
                       "group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all cursor-pointer relative kinetic-action",
@@ -274,15 +267,15 @@ export default function Home() {
                         </>
                       )}
                     </div>
-                  </motion.div>
+                    </div>
                 ))}
-              </motion.div>
+              </div>
             </div>
 
             {/* Other Groups */}
             {navGroups.map(group => (
               <div key={group.title} className="space-y-3">
-                 <span className="text-[11px] uppercase font-black text-white/50 tracking-[0.2em] px-2 block">{group.title}</span>
+                 <span className="text-[11px] uppercase font-black text-white/70 tracking-[0.2em] px-2 block">{group.title}</span>
                  <div className="space-y-1">
                    {group.items.map((item) => (
                       <button

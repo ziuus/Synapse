@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Zap, Bot, User, RefreshCcw, Paperclip, X, File as FileIcon, Play, Terminal, MousePointer, Keyboard, Eye, Mic, Phone, Volume2, PhoneOff, Plus } from "lucide-react";
+import { Send, Zap, Bot, User, RefreshCcw, Paperclip, X, File as FileIcon, Play, Terminal, MousePointer, Keyboard, Eye, Mic, Phone, Volume2, PhoneOff, Plus, Blocks } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface Message {
@@ -259,6 +259,26 @@ export default function ChatInterface({ sessionId }: ChatProps) {
     }
   };
 
+  const runVisionInsight = async () => {
+    setIsLoading(true);
+    try {
+      const res = await fetch(getApiUrl("/api/actions/vision"), { method: "POST" });
+      const data = await res.json();
+      if (data.description) {
+        setMessages(prev => [...prev, { 
+          role: "assistant", 
+          content: `👁️ **SCREEN INSIGHT:**\n\n${data.description}`,
+          model: "Vision Expert" 
+        }]);
+      }
+    } catch (e) {
+      console.error("Vision failed", e);
+    } finally {
+      setIsLoading(false);
+      setIsUtilityMenuOpen(false);
+    }
+  };
+
   const renderContent = (content: string) => {
     if (content.includes("# RUN_COMMAND")) {
       const parts = content.split("```bash");
@@ -345,10 +365,7 @@ export default function ChatInterface({ sessionId }: ChatProps) {
           {messages.length === 0 && (
             <div className="flex flex-col items-center justify-center h-full text-zinc-500 space-y-6">
               <motion.div
-                animate={{ 
-                  scale: [1, 1.05, 1],
-                  filter: ["blur(0px)", "blur(2px)", "blur(0px)"]
-                }}
+                animate={{ scale: [1, 1.05, 1] }}
                 transition={{ duration: 4, repeat: Infinity }}
                 className="p-4 bg-emerald-glow/5 rounded-3xl border border-emerald-glow/10"
               >
@@ -361,16 +378,30 @@ export default function ChatInterface({ sessionId }: ChatProps) {
             </div>
           )}
           
+          {isLoading && (
+            <div className="flex gap-4 items-center p-6 glass-panel w-fit bg-emerald-glow/[0.02]">
+              <div className="flex gap-1.5">
+                {[0, 1, 2].map(i => (
+                  <div
+                    key={i}
+                    className="w-2 h-2 bg-emerald-glow/50 rounded-full animate-pulse"
+                  />
+                ))}
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-glow/60">Deliberating...</span>
+            </div>
+          )}
+          
           <AnimatePresence>
-            {messages.map((msg, i) => (
+            {messages.map((msg, idx) => (
               <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 20, filter: "blur(10px)" }}
-                animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+                key={idx}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 className={cn(
-                  "flex group flex-col",
-                  msg.role === "user" ? "items-end" : "items-start"
+                  "flex w-full",
+                  msg.role === "user" ? "justify-end" : "justify-start"
                 )}
               >
                 <div className={cn(
@@ -428,7 +459,7 @@ export default function ChatInterface({ sessionId }: ChatProps) {
         </div>
 
         {/* Floating Input Area */}
-        <div className="relative mt-auto p-10 pb-12">
+        <div className="p-10 relative">
           {/* Neural Call Overlay */}
           <AnimatePresence>
             {isVoiceMode && (
@@ -493,115 +524,127 @@ export default function ChatInterface({ sessionId }: ChatProps) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute bottom-full left-10 mb-6 p-3 glass-panel border-emerald-glow/20 flex items-center gap-4 text-[10px] text-emerald-glow font-bold"
+                className="absolute bottom-[100%] left-1/2 -translate-x-1/2 mb-4 glass-panel p-4 flex items-center gap-4 bg-emerald-glow/5 border-emerald-glow/20 z-50"
               >
-                <div className="p-1.5 bg-emerald-glow/10 rounded-lg">
-                  <FileIcon size={14} />
+                <div className="p-2 bg-emerald-glow/20 rounded-lg text-emerald-glow">
+                  <FileIcon size={20} />
                 </div>
-                <span className="max-w-[200px] truncate uppercase tracking-widest">{attachment.name}</span>
-                <button onClick={() => setAttachment(null)} className="p-1.5 hover:bg-white/5 rounded-lg transition-all">
-                  <X size={14} className="text-white/20 hover:text-white" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-bold truncate">{attachment.name}</p>
+                  <p className="text-[10px] text-emerald-glow/60 uppercase tracking-widest">Ready for upload</p>
+                </div>
+                <button 
+                  onClick={() => setAttachment(null)}
+                  className="p-2 hover:bg-white/10 rounded-xl transition-all"
+                >
+                  <X size={16} />
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
 
-          <div className="max-w-5xl mx-auto relative group">
-             {/* Utility Menu */}
-             <AnimatePresence>
-               {isUtilityMenuOpen && (
-                 <motion.div 
-                   initial={{ opacity: 0, y: 20, scale: 0.95 }}
-                   animate={{ opacity: 1, y: 0, scale: 1 }}
-                   exit={{ opacity: 0, y: 20, scale: 0.95 }}
-                   className="absolute bottom-full left-0 mb-6 w-72 glass-panel p-3 z-50 overflow-hidden neural-glow"
-                 >
-                    <div className="space-y-1.5">
-                       {[
-                          { id: "canvas", label: "Neural Canvas", icon: Eye, desc: "Multidimensional Workspace", action: () => setIsCanvasOpen(!isCanvasOpen) },
-                          { id: "auto", label: "Autonomous Link", icon: Terminal, desc: "Kernel Level Access" },
-                          { id: "council", label: "Expert Council", icon: Zap, desc: "Neural Mesh Architecture" },
-                       ].map(item => (
-                          <button 
-                            key={item.id}
-                            onClick={() => { item.action?.(); setIsUtilityMenuOpen(false); }}
-                            className="w-full flex items-center gap-4 p-4 rounded-2xl hover:bg-white/[0.03] transition-all group/item text-left kinetic-action"
-                          >
-                             <div className="p-2.5 bg-white/5 rounded-xl text-white/20 group-hover/item:text-emerald-glow group-hover/item:bg-emerald-glow/10 transition-all">
-                                <item.icon size={18} />
-                             </div>
-                             <div>
-                                <p className="text-xs font-bold tracking-tight">{item.label}</p>
-                                <p className="text-[8px] text-white/20 uppercase tracking-[0.2em] mt-0.5">{item.desc}</p>
-                             </div>
-                          </button>
-                       ))}
-                    </div>
-                 </motion.div>
-               )}
-             </AnimatePresence>
-
-             <div className="glass-panel p-3 flex items-end gap-4 focus-within:border-emerald-glow/20 focus-within:shadow-[0_0_50px_rgba(104,186,127,0.05)] transition-all duration-500">
+          <div className="max-w-4xl mx-auto relative group">
+            <div className="glass-panel p-2 flex items-center gap-3 border-white/10 hover:border-emerald-glow/30 shadow-2xl transition-all bg-white/[0.02]">
+              <div className="relative">
                 <button 
                   onClick={() => setIsUtilityMenuOpen(!isUtilityMenuOpen)}
                   className={cn(
-                    "p-3.5 rounded-2xl transition-all kinetic-action",
-                    isUtilityMenuOpen ? "bg-emerald-glow text-pure-black shadow-lg" : "bg-white/5 text-white/30 hover:bg-white/10"
+                    "p-4 rounded-2xl transition-all kinetic-action",
+                    isUtilityMenuOpen ? "bg-emerald-glow text-pure-black" : "hover:bg-white/5 text-white/40 hover:text-emerald-glow"
                   )}
                 >
-                  <Plus size={20} strokeWidth={2.5} />
+                  <Plus size={20} className={cn("transition-transform duration-500", isUtilityMenuOpen && "rotate-45")} />
                 </button>
+                
+                <AnimatePresence>
+                  {isUtilityMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                      className="absolute bottom-full left-0 mb-4 w-64 glass-panel p-3 space-y-1 z-50 shadow-2xl border-white/10 overflow-hidden neural-glow"
+                    >
+                       <button onClick={runVisionInsight} className="w-full flex items-center gap-3 p-3 hover:bg-emerald-glow/10 rounded-xl transition-all group/item text-left">
+                          <div className="p-2 bg-white/5 rounded-lg group-hover/item:bg-emerald-glow/20 text-white/40 group-hover/item:text-emerald-glow">
+                             <Eye size={16} />
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold">Screen Insight</p>
+                             <p className="text-[8px] text-white/20 uppercase tracking-widest">Vision Expert Analysis</p>
+                          </div>
+                       </button>
+                       <button onClick={() => { setIsCanvasOpen(!isCanvasOpen); setIsUtilityMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 hover:bg-emerald-glow/10 rounded-xl transition-all group/item text-left">
+                          <div className="p-2 bg-white/5 rounded-lg group-hover/item:bg-emerald-glow/20 text-white/40 group-hover/item:text-emerald-glow">
+                             <Blocks size={16} />
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold">Neural Canvas</p>
+                             <p className="text-[8px] text-white/20 uppercase tracking-widest">Spatial Synthesis Layer</p>
+                          </div>
+                       </button>
+                       <div className="h-px bg-white/5 my-1" />
+                       <button onClick={() => { setMessages([]); setIsUtilityMenuOpen(false); }} className="w-full flex items-center gap-3 p-3 hover:bg-red-400/10 rounded-xl transition-all group/item text-left">
+                          <div className="p-2 bg-white/5 rounded-lg group-hover/item:bg-red-400/20 text-white/40 group-hover/item:text-red-400">
+                             <RefreshCcw size={16} />
+                          </div>
+                          <div>
+                             <p className="text-xs font-bold">Clear Stream</p>
+                             <p className="text-[8px] text-white/20 uppercase tracking-widest">Purge Neural Buffer</p>
+                          </div>
+                       </button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
-                <div className="flex-1 flex flex-col min-w-0 pb-1">
-                   <textarea
-                     rows={1}
-                     value={input}
-                     onChange={(e) => setInput(e.target.value)}
-                     onKeyDown={(e) => {
-                       if (e.key === "Enter" && !e.shiftKey) {
-                         e.preventDefault();
-                         handleSend();
-                       }
-                     }}
-                     placeholder="Relay neural command..."
-                     className="bg-transparent border-none outline-none py-3 text-sm text-white placeholder:text-white/10 resize-none max-h-40 custom-scrollbar"
-                   />
-                </div>
+              <input 
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
+                placeholder="Relay neural command..."
+                className="flex-1 bg-transparent border-none outline-none text-[15px] font-medium py-4 px-2 placeholder:text-white/20 placeholder:uppercase placeholder:tracking-[0.2em] placeholder:text-[10px]"
+              />
 
-                <div className="flex items-center gap-2 pb-1.5">
-                  <button 
-                    onClick={() => fileInputRef.current?.click()}
-                    className="p-3 text-white/20 hover:text-white hover:bg-white/5 rounded-xl transition-all kinetic-action"
-                  >
-                    <Paperclip size={18} />
-                  </button>
-                  
-                  <button
-                    onClick={toggleListening}
-                    className={cn(
-                      "p-3 rounded-xl transition-all kinetic-action",
-                      isListening ? "bg-red-500/10 text-red-500 animate-pulse" : "text-white/20 hover:text-emerald-glow"
-                    )}
-                  >
-                    <Mic size={18} />
-                  </button>
-
-                  <button
-                    onClick={handleSend}
-                    disabled={isLoading || !input.trim()}
-                    className={cn(
-                      "p-3.5 rounded-2xl transition-all kinetic-action ml-2",
-                      isLoading || !input.trim() 
-                        ? "bg-white/5 text-white/10 opacity-50" 
-                        : "bg-emerald-glow text-pure-black shadow-[0_10px_20px_rgba(104,186,127,0.2)]"
-                    )}
-                  >
-                    {isLoading ? <RefreshCcw className="animate-spin" size={20} /> : <Send size={20} />}
-                  </button>
-                </div>
-
-                <input type="file" ref={fileInputRef} onChange={handleFileUpload} className="hidden" />
-             </div>
+              <div className="flex items-center gap-1 pr-2">
+                <button 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="p-4 hover:bg-white/5 rounded-2xl transition-all text-white/20 hover:text-white kinetic-action"
+                >
+                  <Paperclip size={20} />
+                </button>
+                <button 
+                  onClick={toggleListening}
+                  className={cn(
+                    "p-4 rounded-2xl transition-all kinetic-action relative",
+                    isListening ? "bg-red-500/10 text-red-400" : "hover:bg-white/5 text-white/20 hover:text-white"
+                  )}
+                >
+                  <Mic size={20} />
+                  {isListening && (
+                    <motion.div 
+                      layoutId="mic-glow"
+                      className="absolute inset-0 bg-red-400/20 rounded-2xl blur-md"
+                      animate={{ opacity: [0.5, 1, 0.5] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    />
+                  )}
+                </button>
+                <button 
+                  onClick={handleSend}
+                  disabled={!input.trim() && !attachment}
+                  className="p-5 bg-emerald-glow text-pure-black rounded-[1.5rem] shadow-[0_10px_30px_rgba(104,186,127,0.3)] hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale disabled:hover:scale-100"
+                >
+                  <Send size={20} className="fill-pure-black" />
+                </button>
+              </div>
+            </div>
+            
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleFileUpload} 
+              className="hidden" 
+            />
           </div>
         </div>
       </div>
@@ -614,32 +657,32 @@ export default function ChatInterface({ sessionId }: ChatProps) {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "100%", opacity: 0 }}
             transition={{ type: "spring", damping: 30, stiffness: 300 }}
-            className="w-[45%] border-l border-white/5 bg-space-grey/30 backdrop-blur-3xl flex flex-col z-50 shadow-[-50px_0_100px_rgba(0,0,0,0.5)]"
+            className="w-[45%] border-l border-white/10 bg-space-grey/30 backdrop-blur-3xl flex flex-col z-50 shadow-[-50px_0_100px_rgba(0,0,0,0.5)]"
           >
-             <div className="p-8 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+             <div className="p-8 border-b border-white/10 flex items-center justify-between bg-white/[0.01]">
                 <div className="flex items-center gap-4">
                    <div className="p-2.5 bg-emerald-glow/10 rounded-xl text-emerald-glow shadow-inner">
                       <Eye size={20} />
                    </div>
                    <div className="space-y-0.5">
-                      <span className="text-xs font-black uppercase tracking-[0.2em] text-white/80">NEURAL_CANVAS</span>
-                      <p className="text-[8px] text-white/20 uppercase tracking-widest font-bold">Spatial Synthesis Workspace</p>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-white/90">NEURAL_CANVAS</span>
+                      <p className="text-[10px] text-white/40 uppercase tracking-widest font-bold">Spatial Synthesis Workspace</p>
                    </div>
                 </div>
-                <button onClick={() => setIsCanvasOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all text-white/20 hover:text-white kinetic-action">
+                <button onClick={() => setIsCanvasOpen(false)} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all text-white/40 hover:text-white kinetic-action">
                    <X size={20} />
                 </button>
              </div>
-             <div className="flex-1 p-10 overflow-y-auto custom-scrollbar font-mono text-xs leading-loose text-white/60 selection:bg-emerald-glow/20">
+             <div className="flex-1 p-10 overflow-y-auto custom-scrollbar font-mono text-[13px] leading-loose text-white/80 selection:bg-emerald-glow/20">
                 {canvasContent || (
-                   <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-10">
+                   <div className="h-full flex flex-col items-center justify-center text-center space-y-6 opacity-20">
                       <motion.div
                         animate={{ rotate: 360 }}
                         transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
                       >
                         <Blocks size={64} strokeWidth={0.5} />
                       </motion.div>
-                      <p className="uppercase tracking-[0.4em] text-[10px] font-black">Awaiting Synthesis Data</p>
+                      <p className="uppercase tracking-[0.4em] text-[11px] font-black">Awaiting Synthesis Data</p>
                    </div>
                 )}
              </div>

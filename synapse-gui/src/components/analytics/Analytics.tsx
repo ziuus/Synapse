@@ -8,10 +8,16 @@ import { cn } from "@/lib/utils";
 export default function Analytics() {
   const [data, setData] = useState<any>(null);
 
+  const getApiUrl = (path: string) => {
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const port = typeof window !== 'undefined' && window.location.port === '3000' ? ':8000' : '';
+    return `${window.location.protocol}//${host}${port}${path}`;
+  };
+
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const res = await fetch("http://localhost:8000/api/status");
+        const res = await fetch(getApiUrl("/api/status"));
         const json = await res.json();
         setData(json);
       } catch (e) {
@@ -77,10 +83,10 @@ export default function Analytics() {
                     key={i}
                     initial={{ height: 0 }}
                     animate={{ height: `${val}%` }}
-                    transition={{ delay: i * 0.05, duration: 1 }}
+                    transition={{ duration: 0.5 }}
                     className="flex-1 bg-emerald-glow/20 rounded-t-sm relative group"
                   >
-                     <div className="absolute inset-x-0 top-0 h-1 bg-emerald-glow shadow-[0_0_10px_rgba(104,186,127,0.5)] opacity-0 group-hover:opacity-100 transition-opacity" />
+                     <div className="absolute inset-x-0 top-0 h-1 bg-emerald-glow opacity-0 group-hover:opacity-100 transition-opacity" />
                   </motion.div>
                ))}
             </div>
