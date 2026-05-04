@@ -23,6 +23,12 @@ export default function ChatInterface({ sessionId }: ChatProps) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef<any>(null);
 
+  const getApiUrl = (path: string) => {
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const port = typeof window !== 'undefined' && window.location.port === '3000' ? ':8000' : '';
+    return `${window.location.protocol}//${host}${port}${path}`;
+  };
+
   useEffect(() => {
     if (typeof window !== "undefined" && ("WebkitSpeechRecognition" in window || "speechRecognition" in window)) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -78,7 +84,7 @@ export default function ChatInterface({ sessionId }: ChatProps) {
   const handleRunAction = async (command: string) => {
     setIsLoading(true);
     try {
-      const res = await fetch("http://localhost:8000/api/actions/run", {
+      const res = await fetch(getApiUrl("/api/actions/run"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ type: "terminal", command }),
@@ -124,8 +130,8 @@ export default function ChatInterface({ sessionId }: ChatProps) {
     const fetchSessionData = async () => {
       try {
         const [sRes, rRes] = await Promise.all([
-           fetch(`http://localhost:8000/api/sessions/${sessionId}`),
-           fetch("http://localhost:8000/api/roles")
+           fetch(getApiUrl(`/api/sessions/${sessionId}`)),
+           fetch(getApiUrl("/api/roles"))
         ]);
         if (sRes.ok) {
            const sData = await sRes.json();
@@ -144,7 +150,7 @@ export default function ChatInterface({ sessionId }: ChatProps) {
   const changeRole = async (roleKey: string) => {
      setCurrentRole(roleKey);
      try {
-        await fetch(`http://localhost:8000/api/sessions/${sessionId}`, {
+        await fetch(getApiUrl(`/api/sessions/${sessionId}`), {
            method: "PUT",
            headers: { "Content-Type": "application/json" },
            body: JSON.stringify({ role: roleKey }),
@@ -166,7 +172,7 @@ export default function ChatInterface({ sessionId }: ChatProps) {
     formData.append("file", file);
 
     try {
-      const res = await fetch("http://localhost:8000/api/upload", {
+      const res = await fetch(getApiUrl("/api/upload"), {
         method: "POST",
         body: formData,
       });
@@ -195,7 +201,7 @@ export default function ChatInterface({ sessionId }: ChatProps) {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`http://localhost:8000/api/sessions/${sessionId}/chat`, {
+      const response = await fetch(getApiUrl(`/api/sessions/${sessionId}/chat`), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -368,44 +374,44 @@ export default function ChatInterface({ sessionId }: ChatProps) {
                 )}
               >
                 <div className={cn(
-                  "max-w-[80%] rounded-[2rem] text-sm leading-relaxed relative",
+                  "max-w-[85%] rounded-[2rem] text-[15px] leading-relaxed relative",
                   msg.role === "user" 
-                    ? "bg-emerald-glow text-pure-black px-7 py-4 font-semibold shadow-[0_20px_40px_rgba(104,186,127,0.15)] kinetic-action" 
-                    : "glass-panel px-8 py-6 text-white/90 border border-white/5 neural-glow"
+                    ? "bg-emerald-glow text-pure-black px-8 py-5 font-bold shadow-[0_20px_40px_rgba(104,186,127,0.2)] kinetic-action" 
+                    : "glass-panel px-10 py-8 text-white/95 border border-white/10 neural-glow bg-white/[0.04]"
                 )}>
                   {/* Neural Meta Info */}
                   <div className={cn(
-                    "flex items-center gap-2.5 mb-4 text-[8px] uppercase tracking-[0.2em] font-black",
-                    msg.role === "user" ? "text-pure-black/40" : "text-emerald-glow/60"
+                    "flex items-center gap-3 mb-5 text-[10px] uppercase tracking-[0.2em] font-black",
+                    msg.role === "user" ? "text-pure-black/50" : "text-emerald-glow/80"
                   )}>
-                    {msg.role === "user" ? <User size={10}/> : <Bot size={10} className="animate-pulse" />}
+                    {msg.role === "user" ? <User size={12}/> : <Bot size={12} className="animate-pulse" />}
                     <span>{msg.role === "user" ? "TRANSMISSION_SOURCE" : "NEURAL_SYNTHESIS"}</span>
                   </div>
                   
                   {msg.attachment && (
-                    <div className="flex items-center gap-3 mb-4 p-3 rounded-2xl bg-black/20 border border-white/5 text-[9px] text-white/50 uppercase tracking-widest font-bold">
-                      <FileIcon size={14} className="text-emerald-glow" />
+                    <div className="flex items-center gap-4 mb-5 p-4 rounded-2xl bg-black/30 border border-white/10 text-[10px] text-white/60 uppercase tracking-widest font-bold">
+                      <FileIcon size={16} className="text-emerald-glow" />
                       <span className="truncate">{msg.attachment}</span>
                     </div>
                   )}
                   
-                  <div className="text-neural">
+                  <div className="text-neural font-medium">
                     {renderContent(msg.content)}
                   </div>
                   
                   {msg.role === "assistant" && msg.model && (
-                    <div className="mt-6 pt-5 border-t border-white/5 flex flex-wrap gap-6 text-[8px] text-white/20 uppercase tracking-[0.2em] font-bold">
+                    <div className="mt-8 pt-6 border-t border-white/10 flex flex-wrap gap-8 text-[10px] text-white/40 uppercase tracking-[0.2em] font-black">
                       <div className="flex items-center gap-2">
-                        <span className="text-white/5">NODE_ID:</span> <span className="text-emerald-glow/40">{msg.model}</span>
+                        <span className="text-white/10">NODE_ID:</span> <span className="text-emerald-glow/60">{msg.model}</span>
                       </div>
                       {msg.latency && (
                         <div className="flex items-center gap-2">
-                          <span className="text-white/5">LATENCY:</span> <span className="text-emerald-glow/40">{msg.latency}S</span>
+                          <span className="text-white/10">LATENCY:</span> <span className="text-emerald-glow/60">{msg.latency}S</span>
                         </div>
                       )}
                       {msg.routing && (
                         <div className="flex items-center gap-2">
-                          <span className="text-white/5">ROUTING:</span> <span className="text-emerald-glow/40">{msg.routing}</span>
+                          <span className="text-white/10">ROUTING:</span> <span className="text-emerald-glow/60">{msg.routing}</span>
                         </div>
                       )}
                     </div>

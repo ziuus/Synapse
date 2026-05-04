@@ -9,19 +9,20 @@
 
 @layer base {
   body {
-    @apply bg-pure-black text-white antialiased selection:bg-emerald-glow/30;
+    @apply bg-pure-black text-white/90 antialiased selection:bg-emerald-glow/40;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-weight: 450; /* Slightly bolder for better visibility */
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-white/[0.03] backdrop-blur-3xl border border-white/5 rounded-3xl transition-all duration-500;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    @apply bg-white/[0.05] backdrop-blur-3xl border border-white/10 rounded-3xl transition-all duration-500;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
   }
 
   .neural-glow {
-    @apply shadow-[0_0_40px_rgba(104,186,127,0.15)] border-emerald-glow/20;
+    @apply shadow-[0_0_50px_rgba(104,186,127,0.2)] border-emerald-glow/30;
   }
 
   .kinetic-action {

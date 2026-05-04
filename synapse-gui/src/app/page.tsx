@@ -22,37 +22,33 @@ export default function Home() {
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
 
+  const getApiUrl = (path: string) => {
+    // If we're on port 3000 (dev), point to 8000. 
+    // Otherwise, assume the API is on the same host/port (unified mode).
+    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    const port = typeof window !== 'undefined' && window.location.port === '3000' ? ':8000' : '';
+    return `${window.location.protocol}//${host}${port}${path}`;
+  };
+
   const fetchSessions = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/sessions");
+      const res = await fetch(getApiUrl("/api/sessions"));
       if (res.ok) setSessions(await res.json());
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Fetch sessions failed", e); }
   };
 
   useEffect(() => { fetchSessions(); }, []);
 
   const createSession = async () => {
     try {
-      const res = await fetch("http://localhost:8000/api/sessions", { method: "POST" });
+      const res = await fetch(getApiUrl("/api/sessions"), { method: "POST" });
       if (res.ok) {
         const { id } = await res.json();
         setCurrentSessionId(id);
         setActiveTab("chat");
-        fetchSessions();
+        await fetchSessions();
       }
-    } catch (e) { console.error(e); }
-  };
-
-  const deleteSession = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!confirm("Delete this session?")) return;
-    try {
-      const res = await fetch(`http://localhost:8000/api/sessions/${id}`, { method: "DELETE" });
-      if (res.ok) {
-        if (currentSessionId === id) setCurrentSessionId("");
-        fetchSessions();
-      }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Create session failed", e); }
   };
 
   const startEditing = (id: string, title: string, e: React.MouseEvent) => {
@@ -64,22 +60,22 @@ export default function Home() {
   const saveTitle = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`http://localhost:8000/api/sessions/${id}`, {
+      const res = await fetch(getApiUrl(`/api/sessions/${id}`), {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: editTitle }),
       });
       if (res.ok) {
         setEditingSessionId(null);
-        fetchSessions();
+        await fetchSessions();
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Save title failed", e); }
   };
 
   const exportSession = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      const res = await fetch(`http://localhost:8000/api/sessions/${id}/export`);
+      const res = await fetch(getApiUrl(`/api/sessions/${id}/export`));
       if (res.ok) {
         const { markdown } = await res.json();
         const blob = new Blob([markdown], { type: "text/markdown" });
@@ -89,7 +85,7 @@ export default function Home() {
         a.download = `synapse-chat-${id.slice(0, 8)}.md`;
         a.click();
       }
-    } catch (e) { console.error(e); }
+    } catch (e) { console.error("Export failed", e); }
   };
 
   // Auto-select session or create first one
@@ -140,13 +136,34 @@ export default function Home() {
     visible: { opacity: 1, x: 0 }
   };
 
+  const deleteSession = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm("ARE YOU SURE YOU WANT TO TERMINATE THIS NEURAL STREAM?")) return;
+    try {
+      console.log("Attempting to delete session:", id);
+      const res = await fetch(getApiUrl(`/api/sessions/${id}`), { method: "DELETE" });
+      if (res.ok) {
+        console.log("Successfully deleted session:", id);
+        if (currentSessionId === id) setCurrentSessionId("");
+        await fetchSessions();
+      } else {
+        const err = await res.text();
+        console.error("Delete failed on server:", err);
+        alert(`Deletion failed: ${err}`);
+      }
+    } catch (err: any) { 
+      console.error("Network error during delete:", err);
+      alert(`Network error: ${err.message}`);
+    }
+  };
+
   return (
     <NoSSR>
       <main className="flex h-screen bg-pure-black overflow-hidden selection:bg-emerald-glow/30 text-sm">
         {/* Sidebar */}
-        <div className="w-72 border-r border-white/5 flex flex-col bg-space-grey/40 backdrop-blur-3xl overflow-hidden">
+        <div className="w-72 border-r border-white/10 flex flex-col bg-space-grey/40 backdrop-blur-3xl overflow-hidden">
           
-          <div className="p-8 flex items-center gap-4 border-b border-white/5">
+          <div className="p-8 flex items-center gap-4 border-b border-white/10">
             <motion.div 
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -158,7 +175,7 @@ export default function Home() {
                <h1 className="heading-neural text-base font-black uppercase">SYNAPSE</h1>
                <div className="flex items-center gap-1.5">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-glow animate-pulse" />
-                  <p className="text-[8px] text-white/30 uppercase tracking-[0.2em] font-medium">Neural Link Active</p>
+                  <p className="text-[10px] text-white/50 uppercase tracking-[0.2em] font-medium">Neural Link Active</p>
                </div>
             </div>
           </div>
@@ -168,22 +185,22 @@ export default function Home() {
             {/* Chat Group */}
             <div className="space-y-4">
               <div className="flex items-center justify-between px-2">
-                 <span className="text-[9px] uppercase font-bold text-white/20 tracking-[0.2em]">Neural Streams</span>
-                 <button onClick={createSession} className="text-white/30 hover:text-emerald-glow transition-all p-1 hover:bg-white/5 rounded-lg kinetic-action">
-                    <Plus size={14} />
+                 <span className="text-[10px] uppercase font-bold text-white/40 tracking-[0.2em]">Neural Streams</span>
+                 <button onClick={createSession} className="text-white/50 hover:text-emerald-glow transition-all p-1 hover:bg-white/10 rounded-lg kinetic-action">
+                    <Plus size={16} />
                  </button>
               </div>
 
               {/* Search Sessions */}
               <div className="px-2">
                 <div className="relative group">
-                  <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-emerald-glow transition-colors" />
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 group-focus-within:text-emerald-glow transition-colors" />
                   <input 
                     type="text" 
                     placeholder="Filter streams..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/[0.02] border border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-[10px] outline-none focus:border-emerald-glow/20 focus:bg-white/[0.04] transition-all placeholder:text-white/10"
+                    className="w-full bg-white/[0.04] border border-white/10 rounded-xl py-3 pl-10 pr-4 text-[11px] outline-none focus:border-emerald-glow/40 focus:bg-white/[0.06] transition-all placeholder:text-white/20"
                   />
                 </div>
               </div>
@@ -202,13 +219,13 @@ export default function Home() {
                     variants={itemVariants}
                     onClick={() => { setActiveTab("chat"); setCurrentSessionId(s.id); }}
                     className={cn(
-                      "group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer relative kinetic-action",
+                      "group w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all cursor-pointer relative kinetic-action",
                       activeTab === "chat" && currentSessionId === s.id 
-                        ? "bg-emerald-glow/[0.03] text-emerald-glow border border-emerald-glow/10" 
-                        : "text-white/40 hover:text-white hover:bg-white/[0.02]"
+                        ? "bg-emerald-glow/[0.05] text-emerald-glow border border-emerald-glow/20" 
+                        : "text-white/60 hover:text-white hover:bg-white/[0.04]"
                     )}
                   >
-                    <MessageSquare size={14} className={cn("shrink-0 transition-transform group-hover:scale-110", activeTab === "chat" && currentSessionId === s.id && "text-emerald-glow")} />
+                    <MessageSquare size={16} className={cn("shrink-0 transition-transform group-hover:scale-110", activeTab === "chat" && currentSessionId === s.id && "text-emerald-glow")} />
                     
                     {editingSessionId === s.id ? (
                       <input 
@@ -216,39 +233,43 @@ export default function Home() {
                         value={editTitle}
                         onChange={(e) => setEditTitle(e.target.value)}
                         onKeyDown={(e) => e.key === "Enter" && saveTitle(s.id, e as any)}
-                        className="bg-transparent border-none outline-none text-xs w-full text-white"
+                        className="bg-transparent border-none outline-none text-[13px] w-full text-white"
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
-                      <span className="truncate text-xs flex-1 font-medium">{s.title || "New Stream"}</span>
+                      <span className="truncate text-[13px] flex-1 font-bold">{s.title || "New Stream"}</span>
                     )}
 
                     {/* Actions */}
                     <div className={cn(
-                      "flex items-center gap-1 transition-opacity",
+                      "flex items-center gap-3 transition-opacity",
                       editingSessionId === s.id ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                     )}>
                       {editingSessionId === s.id ? (
-                        <button onClick={(e) => saveTitle(s.id, e)} className="p-1 hover:text-emerald-glow"><Check size={12}/></button>
+                        <button onClick={(e) => saveTitle(s.id, e)} className="p-1 hover:text-emerald-glow"><Check size={16}/></button>
                       ) : (
                         <>
                           <button 
                             onClick={(e) => { e.stopPropagation(); startEditing(s.id, s.title, e); }} 
                             className="p-1 hover:text-emerald-glow transition-colors"
                           >
-                            <Edit3 size={11}/>
+                            <Edit3 size={15}/>
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); exportSession(s.id, e); }} 
                             className="p-1 hover:text-emerald-glow transition-colors"
                           >
-                            <Download size={11}/>
+                            <Download size={15}/>
                           </button>
                           <button 
-                            onClick={(e) => { e.stopPropagation(); deleteSession(s.id, e); }} 
-                            className="p-1 hover:text-red-400/80 transition-colors"
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              console.log("Delete triggered for:", s.id);
+                              deleteSession(s.id, e); 
+                            }} 
+                            className="p-1 hover:text-red-400 transition-colors"
                           >
-                            <Trash2 size={11}/>
+                            <Trash2 size={15}/>
                           </button>
                         </>
                       )}
@@ -260,26 +281,26 @@ export default function Home() {
 
             {/* Other Groups */}
             {navGroups.map(group => (
-              <div key={group.title} className="space-y-2">
-                 <span className="text-[9px] uppercase font-bold text-white/20 tracking-[0.2em] px-2 block">{group.title}</span>
+              <div key={group.title} className="space-y-3">
+                 <span className="text-[11px] uppercase font-black text-white/50 tracking-[0.2em] px-2 block">{group.title}</span>
                  <div className="space-y-1">
                    {group.items.map((item) => (
                       <button
                         key={item.id}
                         onClick={() => setActiveTab(item.id)}
                         className={cn(
-                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative kinetic-action group",
+                          "w-full flex items-center gap-4 px-3 py-3 rounded-xl transition-all relative kinetic-action group",
                           activeTab === item.id 
-                            ? "bg-emerald-glow/[0.03] text-emerald-glow border border-emerald-glow/10" 
-                            : "text-white/40 hover:text-white hover:bg-white/[0.02]"
+                            ? "bg-emerald-glow/[0.08] text-emerald-glow border border-emerald-glow/30" 
+                            : "text-white/70 hover:text-white hover:bg-white/[0.06]"
                         )}
                       >
-                        <item.icon size={14} className="shrink-0 transition-transform group-hover:scale-110" />
-                        <span className="text-xs font-medium">{item.label}</span>
+                        <item.icon size={18} className="shrink-0 transition-transform group-hover:scale-110" />
+                        <span className="text-[13px] font-bold">{item.label}</span>
                         {activeTab === item.id && (
                           <motion.div 
                             layoutId="active-nav-bg"
-                            className="absolute inset-0 bg-emerald-glow/[0.02] rounded-xl -z-10"
+                            className="absolute inset-0 bg-emerald-glow/[0.03] rounded-xl -z-10"
                           />
                         )}
                       </button>
@@ -289,7 +310,7 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="p-6 mt-auto border-t border-white/5 bg-space-grey/20">
+          <div className="p-6 mt-auto border-t border-white/10 bg-space-grey/20">
              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                    <div className="p-1.5 bg-emerald-glow/10 rounded-lg">
