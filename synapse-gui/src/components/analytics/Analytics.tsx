@@ -9,9 +9,11 @@ export default function Analytics() {
   const [data, setData] = useState<any>(null);
 
   const getApiUrl = (path: string) => {
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const port = typeof window !== 'undefined' && window.location.port === '3000' ? ':8000' : '';
-    return `${window.location.protocol}//${host}${port}${path}`;
+    if (typeof window === 'undefined') return `http://localhost:8000${path}`;
+    const { protocol, hostname, port } = window.location;
+    const targetPort = port === '3000' ? '8000' : port;
+    const portStr = targetPort ? `:${targetPort}` : '';
+    return `${protocol}//${hostname}${portStr}${path}`;
   };
 
   useEffect(() => {

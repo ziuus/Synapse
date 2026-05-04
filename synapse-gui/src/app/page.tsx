@@ -23,11 +23,11 @@ export default function Home() {
   const [editTitle, setEditTitle] = useState("");
 
   const getApiUrl = (path: string) => {
-    // If we're on port 3000 (dev), point to 8000. 
-    // Otherwise, assume the API is on the same host/port (unified mode).
-    const host = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
-    const port = typeof window !== 'undefined' && window.location.port === '3000' ? ':8000' : '';
-    return `${window.location.protocol}//${host}${port}${path}`;
+    if (typeof window === 'undefined') return `http://localhost:8000${path}`;
+    const { protocol, hostname, port } = window.location;
+    const targetPort = port === '3000' ? '8000' : port;
+    const portStr = targetPort ? `:${targetPort}` : '';
+    return `${protocol}//${hostname}${portStr}${path}`;
   };
 
   const fetchSessions = async () => {
