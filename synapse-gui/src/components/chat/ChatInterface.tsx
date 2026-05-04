@@ -323,6 +323,8 @@ export default function ChatInterface({ sessionId }: ChatProps) {
        } catch (e) { console.error("UI Action parse error", e); }
     }
     return <div className="whitespace-pre-wrap font-light tracking-wide">{content}</div>;
+  };
+
   return (
     <div className="flex h-full w-full relative">
       <div className={cn(
