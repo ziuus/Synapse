@@ -1,0 +1,54 @@
+models:
+  chat:
+    name: "phi3:mini"
+    description: "General chat and conversation"
+    size_gb: 2.3
+    keywords: ["hello", "hi", "how are", "what is", "explain", "tell me", "who", "where", "when", "why", "recommend", "help me", "can you", "please", "thanks"]
+
+  code:
+    name: "qwen2.5-coder:1.5b"
+    description: "Code generation and debugging"
+    size_gb: 1.0
+    keywords: ["code", "function", "debug", "error", "python", "javascript", "program", "script", "bug", "compile", "syntax", "class", "import", "def ", "html", "css", "sql", "api", "json", "typescript", "react", "docker", "bash", "git", "regex", "algorithm"]
+
+  math:
+    name: "phi3:mini"
+    description: "Math and logical reasoning"
+    size_gb: 2.3
+    keywords: ["calculate", "solve", "equation", "integral", "derivative", "probability", "matrix", "formula", "proof", "theorem", "sum", "multiply", "divide", "algebra", "geometry", "calculus", "statistics", "eigenvalue", "fourier", "factorial", "prime"]
+
+  vision:
+    name: "moondream:latest"
+    description: "Image understanding and analysis"
+    size_gb: 1.8
+    keywords: ["image", "picture", "photo", "describe this", "what do you see", "look at", "analyze this image", ".jpg", ".png", ".jpeg", ".webp"]
+
+  summarize:
+    name: "phi3:mini"
+    description: "Summarization and extraction"
+    size_gb: 2.3
+    keywords: ["summarize", "summary", "tldr", "key points", "main points", "condense", "shorten", "brief overview", "extract", "highlight"]
+
+roles:
+  generalist:
+    name: "Generalist"
+    description: "Balanced for daily tasks"
+    expert_map: { chat: "phi3:mini", code: "qwen2.5-coder:1.5b", vision: "moondream:latest" }
+    system_prompt: "You are Synapse, a helpful generalist assistant."
+  researcher:
+    name: "Deep Researcher"
+    description: "Optimized for information retrieval"
+    expert_map: { chat: "phi3:mini", vision: "moondream:latest", summarize: "phi3:mini" }
+    system_prompt: "You are a professional researcher. Focus on depth, accuracy, and structured findings."
+  engineer:
+    name: "Software Engineer"
+    description: "High-performance coding and logic"
+    expert_map: { chat: "phi3:mini", code: "qwen2.5-coder:1.5b", summarize: "phi3:mini" }
+    system_prompt: "You are an elite software engineer. Focus on efficiency, security, and clean architecture."
+
+switcher:
+  rule_confidence_threshold: 0.6
+  fallback_classifier: "phi3:mini"
+  context_window: 10
+  idle_timeout: 300
+  performance_tier: "balanced"
