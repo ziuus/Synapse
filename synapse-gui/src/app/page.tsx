@@ -138,55 +138,80 @@ export default function Home() {
   return (
     <NoSSR>
       <main className="flex h-screen bg-pure-black overflow-hidden selection:bg-emerald-glow selection:text-pure-black text-sm">
+  const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+  };
+
+  return (
+    <NoSSR>
+      <main className="flex h-screen bg-pure-black overflow-hidden selection:bg-emerald-glow/30 text-sm">
         {/* Sidebar */}
-        <div className="w-72 border-r border-white/5 flex flex-col bg-space-grey/50 backdrop-blur-xl overflow-hidden custom-scrollbar">
+        <div className="w-72 border-r border-white/5 flex flex-col bg-space-grey/40 backdrop-blur-3xl overflow-hidden">
           
-          <div className="p-6 flex items-center gap-3 border-b border-white/5">
-            <div className="p-2 bg-emerald-glow rounded-xl shadow-[0_0_20px_rgba(104,186,127,0.4)]">
-              <Zap size={16} className="text-pure-black" />
-            </div>
-            <div>
-               <h1 className="font-bold tracking-tighter leading-tight">SYNAPSE</h1>
-               <p className="text-[9px] text-white/40 uppercase tracking-widest">Gateway Dashboard</p>
+          <div className="p-8 flex items-center gap-4 border-b border-white/5">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="p-2.5 bg-emerald-glow rounded-xl shadow-[0_0_30px_rgba(104,186,127,0.3)] kinetic-action"
+            >
+              <Zap size={18} className="text-pure-black fill-pure-black" />
+            </motion.div>
+            <div className="space-y-0.5">
+               <h1 className="heading-neural text-base font-black uppercase">SYNAPSE</h1>
+               <div className="flex items-center gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-glow animate-pulse" />
+                  <p className="text-[8px] text-white/30 uppercase tracking-[0.2em] font-medium">Neural Link Active</p>
+               </div>
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          <div className="flex-1 overflow-y-auto p-5 space-y-8 custom-scrollbar">
             
             {/* Chat Group */}
             <div className="space-y-4">
               <div className="flex items-center justify-between px-2">
-                 <span className="text-[10px] uppercase font-bold text-white/30 tracking-widest">Neural Streams</span>
-                 <button onClick={createSession} className="text-white/40 hover:text-emerald-glow transition-colors p-1 hover:bg-white/5 rounded">
+                 <span className="text-[9px] uppercase font-bold text-white/20 tracking-[0.2em]">Neural Streams</span>
+                 <button onClick={createSession} className="text-white/30 hover:text-emerald-glow transition-all p-1 hover:bg-white/5 rounded-lg kinetic-action">
                     <Plus size={14} />
                  </button>
               </div>
 
               {/* Search Sessions */}
-              <div className="relative px-2">
-                <Search size={12} className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" />
-                <input 
-                  type="text" 
-                  placeholder="Filter streams..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-white/[0.03] border border-white/5 rounded-lg py-2 pl-8 pr-4 text-[10px] outline-none focus:border-emerald-glow/30 transition-all placeholder:text-white/10"
-                />
+              <div className="px-2">
+                <div className="relative group">
+                  <Search size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-emerald-glow transition-colors" />
+                  <input 
+                    type="text" 
+                    placeholder="Filter streams..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full bg-white/[0.02] border border-white/5 rounded-xl py-2.5 pl-9 pr-4 text-[10px] outline-none focus:border-emerald-glow/20 focus:bg-white/[0.04] transition-all placeholder:text-white/10"
+                  />
+                </div>
               </div>
 
-              <div className="space-y-1">
+              <motion.div 
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  visible: { transition: { staggerChildren: 0.05 } }
+                }}
+                className="space-y-1"
+              >
                 {filteredSessions.map(s => (
-                  <div
+                  <motion.div
                     key={s.id}
+                    variants={itemVariants}
                     onClick={() => { setActiveTab("chat"); setCurrentSessionId(s.id); }}
                     className={cn(
-                      "group w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all cursor-pointer relative",
+                      "group w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer relative kinetic-action",
                       activeTab === "chat" && currentSessionId === s.id 
-                        ? "bg-white/5 text-emerald-glow border border-emerald-glow/20" 
-                        : "text-white/50 hover:text-white hover:bg-white/[0.02]"
+                        ? "bg-emerald-glow/[0.03] text-emerald-glow border border-emerald-glow/10" 
+                        : "text-white/40 hover:text-white hover:bg-white/[0.02]"
                     )}
                   >
-                    <MessageSquare size={14} className="shrink-0" />
+                    <MessageSquare size={14} className={cn("shrink-0 transition-transform group-hover:scale-110", activeTab === "chat" && currentSessionId === s.id && "text-emerald-glow")} />
                     
                     {editingSessionId === s.id ? (
                       <input 
@@ -198,7 +223,7 @@ export default function Home() {
                         onClick={(e) => e.stopPropagation()}
                       />
                     ) : (
-                      <span className="truncate text-xs flex-1">{s.title || "New Chat"}</span>
+                      <span className="truncate text-xs flex-1 font-medium">{s.title || "New Stream"}</span>
                     )}
 
                     {/* Actions */}
@@ -214,58 +239,75 @@ export default function Home() {
                             onClick={(e) => { e.stopPropagation(); startEditing(s.id, s.title, e); }} 
                             className="p-1 hover:text-emerald-glow transition-colors"
                           >
-                            <Edit3 size={10}/>
+                            <Edit3 size={11}/>
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); exportSession(s.id, e); }} 
                             className="p-1 hover:text-emerald-glow transition-colors"
                           >
-                            <Download size={10}/>
+                            <Download size={11}/>
                           </button>
                           <button 
                             onClick={(e) => { e.stopPropagation(); deleteSession(s.id, e); }} 
-                            className="p-1 hover:text-red-400 transition-colors"
+                            className="p-1 hover:text-red-400/80 transition-colors"
                           >
-                            <Trash2 size={10}/>
+                            <Trash2 size={11}/>
                           </button>
                         </>
                       )}
                     </div>
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
             </div>
 
             {/* Other Groups */}
             {navGroups.map(group => (
-              <div key={group.title} className="space-y-1">
-                 <span className="text-[10px] uppercase font-bold text-white/30 tracking-widest px-2 mb-2 block">{group.title}</span>
-                 {group.items.map((item) => (
-                    <button
-                      key={item.id}
-                      onClick={() => setActiveTab(item.id)}
-                      className={cn(
-                        "w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all",
-                        activeTab === item.id 
-                          ? "bg-white/5 text-emerald-glow border border-emerald-glow/20" 
-                          : "text-white/50 hover:text-white hover:bg-white/[0.02]"
-                      )}
-                    >
-                      <item.icon size={14} className="shrink-0" />
-                      <span className="text-xs">{item.label}</span>
-                    </button>
-                 ))}
+              <div key={group.title} className="space-y-2">
+                 <span className="text-[9px] uppercase font-bold text-white/20 tracking-[0.2em] px-2 block">{group.title}</span>
+                 <div className="space-y-1">
+                   {group.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => setActiveTab(item.id)}
+                        className={cn(
+                          "w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all relative kinetic-action group",
+                          activeTab === item.id 
+                            ? "bg-emerald-glow/[0.03] text-emerald-glow border border-emerald-glow/10" 
+                            : "text-white/40 hover:text-white hover:bg-white/[0.02]"
+                        )}
+                      >
+                        <item.icon size={14} className="shrink-0 transition-transform group-hover:scale-110" />
+                        <span className="text-xs font-medium">{item.label}</span>
+                        {activeTab === item.id && (
+                          <motion.div 
+                            layoutId="active-nav-bg"
+                            className="absolute inset-0 bg-emerald-glow/[0.02] rounded-xl -z-10"
+                          />
+                        )}
+                      </button>
+                   ))}
+                 </div>
               </div>
             ))}
           </div>
 
-          <div className="p-4 mt-auto border-t border-white/5">
-             <div className="flex items-center justify-between text-white/30">
-                <div className="flex items-center gap-2">
-                   <Shield size={12} className="text-emerald-glow" />
-                   <span className="text-[10px] uppercase tracking-widest">Local Node</span>
+          <div className="p-6 mt-auto border-t border-white/5 bg-space-grey/20">
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                   <div className="p-1.5 bg-emerald-glow/10 rounded-lg">
+                      <Shield size={12} className="text-emerald-glow" />
+                   </div>
+                   <div className="space-y-0.5">
+                      <p className="text-[10px] text-white font-bold tracking-tight">LOCAL NODE</p>
+                      <p className="text-[8px] text-white/30 uppercase tracking-widest font-medium">Secured Cluster</p>
+                   </div>
                 </div>
-                <div className="w-2 h-2 rounded-full bg-emerald-glow animate-pulse" />
+                <div className="flex gap-1">
+                   {[...Array(3)].map((_, i) => (
+                     <div key={i} className="w-1 h-1 rounded-full bg-emerald-glow/40" />
+                   ))}
+                </div>
              </div>
           </div>
         </div>

@@ -9,40 +9,55 @@
 
 @layer base {
   body {
-    @apply bg-pure-black text-white antialiased;
-    font-family: 'Space Grotesk', sans-serif;
+    @apply bg-pure-black text-white antialiased selection:bg-emerald-glow/30;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
 @layer components {
   .glass-panel {
-    @apply bg-white/5 backdrop-blur-3xl border border-white/10 rounded-2xl;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8);
+    @apply bg-white/[0.03] backdrop-blur-3xl border border-white/5 rounded-3xl transition-all duration-500;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
   }
 
-  .emerald-glow {
-    box-shadow: 0 0 20px rgba(104, 186, 127, 0.3);
+  .neural-glow {
+    @apply shadow-[0_0_40px_rgba(104,186,127,0.15)] border-emerald-glow/20;
   }
 
-  .emerald-border {
-    @apply border border-emerald-glow/30;
+  .kinetic-action {
+    @apply transition-all duration-300 active:scale-95 hover:scale-[1.02] hover:shadow-[0_0_20px_rgba(104,186,127,0.2)];
+  }
+
+  .text-neural {
+    @apply tracking-tight leading-relaxed font-light;
+  }
+
+  .heading-neural {
+    @apply tracking-tighter font-extrabold;
   }
 }
 
-/* Custom Scrollbar */
+/* Custom Neural Scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
+  width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #000;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1a1a1a;
-  border-radius: 10px;
+  @apply bg-white/5 rounded-full hover:bg-emerald-glow transition-colors;
 }
 
-::-webkit-scrollbar-thumb:hover {
-  background: #2E6F40;
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  @apply bg-white/5 rounded-full hover:bg-emerald-glow transition-colors;
 }
