@@ -235,6 +235,30 @@ async def chat_endpoint(session_id: str, req: ChatRequest):
 
     return StreamingResponse(generate(), media_type="text/plain")
 
+@app.post("/api/actions/vision")
+async def run_vision_insight():
+    try:
+        # 1. Capture Screen
+        img_path = capture_screen()
+        if not img_path:
+            raise HTTPException(status_code=500, detail="Failed to capture screen")
+        
+        # 2. Analyze with Moondream (Vision Expert)
+        vision_model = switcher.models.get("vision", {}).get("name", "moondream")
+        prompt = "Describe the current screen content in detail. Focus on windows, text, and active tasks."
+        
+        # Use manager to generate description
+        description = ""
+        for token in manager.chat_stream(vision_model, [
+            {"role": "user", "content": prompt, "images": [img_path]}
+        ]):
+            description += token
+        
+        return {"description": description, "screenshot": img_path}
+    except Exception as e:
+        log.error(f"Vision insight failed: {e}")
+        return {"error": str(e)}
+
 @app.get("/api/status")
 async def get_status():
     try:
