@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Package, Download, Trash2, Database, Activity, CheckCircle2, RefreshCcw, Cpu, Cpu as VramIcon, HardDrive, Clock, Search, ExternalLink } from "lucide-react";
+import { Package, Download, Trash2, Database, Activity, CheckCircle2, RefreshCcw, Cpu, Cpu as VramIcon, HardDrive, Clock, Search, ExternalLink, Server } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ModelInfo {

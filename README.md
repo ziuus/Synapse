@@ -35,13 +35,12 @@ Real-time telemetry monitoring your neural footprint. Track VRAM allocation, CPU
 ### Rapid Start
 ```bash
 # Clone and Initialize
-git clone https://github.com/zius/Synapse.git
+git clone https://github.com/ziuus/Synapse.git
 cd Synapse
 bash install.sh
 
-# Launch Neural Kernel & UI
-python main.py --api
-cd synapse-gui && pnpm dev
+# Launch Unified Neural Link
+python main.py --serve
 ```
 
 ## ⚙️ Configuration

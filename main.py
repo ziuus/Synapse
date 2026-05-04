@@ -38,19 +38,26 @@ def check_status():
 
 def main():
     parser = argparse.ArgumentParser(description="Synapse v1.0")
-    parser.add_argument("--web",       action="store_true", help="Launch Web UI (Gradio)")
+    parser.add_argument("--serve",     action="store_true", help="Launch Unified System (API + GUI)")
+    parser.add_argument("--web",       action="store_true", help="Launch Legacy Web UI")
     parser.add_argument("--api",       action="store_true", help="Launch FastAPI Backend")
     parser.add_argument("--status",    action="store_true", help="System status")
     parser.add_argument("--benchmark", action="store_true", help="Benchmark switcher accuracy")
     args = parser.parse_args()
 
-    log.info("Synapse v1.0 starting")
+    log.info("Synapse starting")
 
     if args.status:
         check_status()
     elif args.benchmark:
         from tools.benchmark import run_benchmark
         run_benchmark()
+    elif args.serve:
+        import uvicorn
+        log.info("Starting Synapse Unified System at http://localhost:8000")
+        print("\n⚡ SYNAPSE UNIFIED SYSTEM ACTIVE")
+        print("🌍 Access Neural Dashboard → http://localhost:8000")
+        uvicorn.run("interfaces.api:app", host="0.0.0.0", port=8000, reload=False)
     elif args.api:
         import uvicorn
         log.info("Starting Synapse API at http://localhost:8000")
