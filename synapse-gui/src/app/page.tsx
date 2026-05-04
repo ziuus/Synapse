@@ -135,9 +135,6 @@ export default function Home() {
     }
   ];
 
-  return (
-    <NoSSR>
-      <main className="flex h-screen bg-pure-black overflow-hidden selection:bg-emerald-glow selection:text-pure-black text-sm">
   const itemVariants = {
     hidden: { opacity: 0, x: -10 },
     visible: { opacity: 1, x: 0 }
