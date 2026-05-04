@@ -1,7 +1,7 @@
 # ⚡ SYNAPSE
-**High-Fidelity Agentic OS with Dynamic Expert Routing**
+**The Private Agentic Personal Assistant for High-Fidelity Workflows**
 
-Synapse is an industrial-grade intelligence platform designed to maximize local resource efficiency. It orchestrates a "Council of Experts" (specialized SLMs) through a lightweight neural switcher, ensuring only one high-performance model occupies RAM at any given time.
+Synapse is your personal intelligence partner, designed to maximize local resource efficiency. It orchestrates a "Council of Experts" (specialized SLMs) to handle coding, research, and autonomous tasks—keeping your data 100% private and on-device.
 
 ---
 
